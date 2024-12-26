@@ -1,0 +1,71 @@
+********************************************** 
+Nifi - Cloudera 
+********************************************** ---** Download and install nifi **--- 
+>> Do this on all hosts  
+$ wget https://archive.apache.org/dist/nifi/1.9.0/nifi-1.9.0-bin.tar.gz 
+$ tar -xzvf nifi-1.9.0-bin.tar.gz  
+$ cd /opt 
+$ sudo mkdir nifi 
+$ sudo mv nifi-1.9.0 /opt/nifi ---** Configure Nifi **--- 
+$ cd /opt/nifi/nifi-1.9.0 
+$ cd conf 
+$ sudo nano nifi.properties 
+nifi.web.http.host=ip-172-31-92-235.ec2.internal 
+nifi.web.http.port=8080 
+nifi.cluster.is.node=true 
+nifi.cluster.node.address=ip-172-31-92-235.ec2.internal  
+nifi.cluster.node.protocol.port=11122 
+nifi.zookeeper.connect.string=ip-172-31-89-107.ec2.internal:2181,ip-172-31-86
+50.ec2.internal:2181,ip-172-31-87-27.ec2.internal:2181 
+nifi.state.management.provider.cluster=zk-providernifi.sensitive.props.key=password 
+$ sudo nano state-management.xml 
+<property name="Connect String">nifi.zookeeper.connect.string=ip-172-31-89
+107.ec2.internal:2181,ip-172-31-86-50.ec2.internal:2181,ip-172-31-87
+27.ec2.internal:2181</property> 
+$ cd .. 
+$ cd bin 
+$ sudo nano nifi-env.sh 
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk 
+$ cd .. ---** Start Nifi **--- 
+$ ./bin/nifi.sh start 
+$ cd logs/ 
+$ nano nifi-app.log 
+Connect to Nifi webui on 8080 
+################################################################################
+---** Create flow file for hdfs & S3 **--- 
+>> Connect to worker node 
+$ hdfs dfs -mkdir -p /user/ubuntu/nifidata 
+$ hdfs dfs -chown -R ubuntu:ubuntu /user/ubuntu 
+$ hdfs dfs -ls -R /user/ubuntu 
+>> Create bucket on S3 
+>> Create an IAM user with s3 full access and create credentials 
+>>> On Nifi UI## Select Generate_Flow_File processor 
+Time - 1Sec 
+File Size - 100B 
+## Select Put_HDFS 
+Hadoop-Configuration-resources - /etc/hadoop/conf.cloudera.hdfs/core-site.xml, 
+/etc/hadoop/conf.cloudera.hdfs/hdfs-site.xml 
+Directory - /user/ubuntu/nifidata 
+## Configure controller service and add controller 
+AWSCredentialsProviderControllerService - add key creds 
+## Select PutS3Object 
+Bucket - <bucketname> 
+AWS Credentials Provider service - AWS Credentials Provider service 
+Region - <bucket-region> ---** Add Kafka Cluster **--- 
+################################################################################ 
+>> Add single node kafka cluster 
+>> Configure kafka 
+offsets.topic.replication.factor = 1 
+>> Add SMM service for monitoring 
+>> Create topic  
+kafka-topics --zookeeper  ip-172-31-56-244.us-west-2.compute.internal:2181/kafka --create --topic 
+mytopic1 --partitions 3 --replication-factor 1 
+---** Create flow file for Kafka Producer and Consumer **--- 
+## Select PublishKafka 
+Kafka Brokers - ip-172-31-81-190.ec2.internal:9092 
+Topic Name(s) - mytopic1 
+## Select ConsumeKafka 
+Kafka Brokers - ip-172-31-81-190.ec2.internal:9092 
+Topic Name(s) - mytopic1 
+Group ID - <gname> 
+Offset Reset - earliest

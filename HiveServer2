@@ -1,0 +1,11 @@
+          ################################
+                 HiveServer2 Fix
+          ################################
+
+
+- Go under hive on tez
+
+- Under Hive-site.xml
+    Set name - hive.server2.tez.initialize.default.sessions 
+    value    - false
+- Save and restart
