@@ -1,2 +1,2 @@
 # Hadoop vault
-### This repo consists of Hadoop and related scripts 
+### This repo consist of Hadoop and related scripts 
